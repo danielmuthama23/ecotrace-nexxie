@@ -1,0 +1,117 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EcoTrace Nexus</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#04120b;--pn:#0a2417;--ln:#17492f;--g:#3ddc84;--mint:#b6f5cf;--lime:#c8f169;--mu:#8bb89d;--tx:#e6fbee;--warn:#ffb547;--bad:#ff5d5d}
+@media(prefers-color-scheme:light){:root{--bg:#eaf6ee;--pn:#fff;--ln:#bfdcc9;--g:#12a150;--mint:#0b5c32;--lime:#5f8a0a;--mu:#4f7a62;--tx:#0b2a1a}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 Manrope,system-ui,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.w{max-width:1400px;margin:auto;padding:14px}
+header{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+h1{font:700 1.25rem Unbounded,sans-serif;margin:0;flex:1;min-width:200px}h2{font:600 .92rem Unbounded,sans-serif;margin:0 0 10px}
+.live{color:var(--g);font-weight:600}.live:before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--g);margin-right:6px;animation:p 1.4s infinite}.off{color:var(--bad)}.off:before{background:var(--bad)}
+@keyframes p{50%{opacity:.25}}
+input,textarea{font:inherit;background:var(--bg);color:var(--tx);border:1px solid var(--ln);border-radius:10px;padding:9px 12px;width:100%}
+#s{width:240px}input:focus-visible,button:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
+.k{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px}
+.k div,section{background:var(--pn);border:1px solid var(--ln);border-radius:14px;padding:14px;min-width:0}
+.k small{color:var(--mu)}.k b{display:block;font:700 1.5rem Unbounded,sans-serif;color:var(--mint)}
+.m{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:10px;margin-bottom:10px}.side{display:grid;gap:10px;align-content:start}
+#map{height:620px;border-radius:14px;border:1px solid var(--ln);background:var(--pn)}
+.b3{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:10px}
+@media(max-width:1000px){.m,.b3{grid-template-columns:1fr}.k{grid-template-columns:1fr 1fr}#map{height:58vh;min-height:340px}#s{width:100%}}
+button{font:600 .85rem Manrope;background:var(--g);color:#04120b;border:0;border-radius:8px;padding:8px 12px;cursor:pointer}button.gh{background:none;color:var(--g);border:1px solid var(--g)}button:disabled{opacity:.4}
+.bar{height:8px;border-radius:4px;background:var(--ln);overflow:hidden;flex:1}.bar i{display:block;height:100%;background:var(--g);transition:width .8s}
+.r{display:flex;gap:10px;align-items:center;padding:5px 0;font-size:.88rem}.r span:first-child{width:78px}.r span:last-child{width:46px;text-align:right}.rg{cursor:pointer}
+.mono{font:.74rem ui-monospace,Menlo,monospace;color:var(--mu);word-break:break-all}.bad{color:var(--bad)}.wn{color:var(--warn)}
+.tl{border-left:2px solid var(--ln);margin:10px 0 0 5px;padding-left:12px}.tl div{margin-bottom:8px;position:relative}.tl div:before{content:"";position:absolute;left:-18px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--g)}
+.mix{display:flex;height:16px;border-radius:8px;overflow:hidden;margin-bottom:8px}.mix i{display:block}
+.al{padding:6px 0;border-top:1px solid var(--ln);font-size:.85rem}
+#log{max-height:240px;overflow:auto;font-size:.88rem}#log p{margin:0 0 10px}#log .u{color:var(--lime)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.chips button{font-weight:400;font-size:.78rem}
+.tk{width:18px;height:18px;border-radius:50%;background:#fff;border:3px solid var(--lime);box-shadow:0 0 12px var(--lime)}.tk.s{width:24px;height:24px;margin:-3px 0 0 -3px}
+.hb{width:12px;height:12px;background:var(--mint);border:2px solid var(--bg)}.fc{width:0;height:0;border:7px solid transparent;border-bottom:12px solid var(--lime);border-top:0}
+.rl{color:#fff;font:600 11px Manrope;text-shadow:0 0 4px #000,0 0 4px #000;white-space:nowrap;margin:-4px 0 0 10px}
+.leaflet-container{font-family:Manrope,sans-serif}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body><div class="w">
+<header><h1>EcoTrace Nexus</h1><span id="st" class="live off">Connecting</span><input id="s" placeholder="Trace a bin, e.g. BIN-10042" aria-label="Trace a bin"></header>
+<div class="k"><div><small>Collected (t)</small><b id="k1">-</b></div><div><small>Diversion rate</small><b id="k2">-</b></div><div><small>Bins tracked</small><b id="k3">-</b></div><div><small>Trucks moving</small><b id="k4">-</b></div></div>
+<div class="m"><div id="map" aria-label="Live map of bins and trucks"></div>
+<div class="side"><section><h2>Bin trace</h2><div id="tr">Select a bin on the map.</div></section>
+<section><h2>Ask the system</h2><div id="log" aria-live="polite"></div>
+<div class="chips" id="ch"></div><input id="q" placeholder="Ask about bins, trucks, regions or policy" aria-label="Question"></section>
+<section><h2>Classify waste photo</h2><input type="file" id="vf" accept="image/*" capture="environment" aria-label="Waste photo"><div style="margin-top:8px"><button id="vb">Classify with OpenAI</button></div><div id="vo" class="mono" style="margin-top:8px"></div></section></div></div>
+<div class="b3"><section><h2>Regions</h2><div id="rg"></div></section><section><h2>Material mix</h2><div class="mix" id="mx"></div><div id="ml"></div></section>
+<section><h2>Alerts and ledger</h2><button class="gh" id="vl">Verify ledger</button> <span id="vr" class="mono"></span><div id="al"></div></section></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+const $=i=>document.getElementById(i),esc=t=>String(t).replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const BACKEND_BASE=(window.ECOTRACE_BACKEND_URL || (window.location.port === '3000' ? 'http://localhost:8000' : window.location.origin)).replace(/\/$/, '');
+const apiUrl=(p)=>new URL(p.startsWith('/api')?p:`/api${p}`, BACKEND_BASE || window.location.origin).toString();
+const jget=async p=>{const r=await fetch(apiUrl(p));if(!r.ok)throw new Error(r.status);return r.json()};
+const jpost=async(p,b)=>{const r=await fetch(apiUrl(p),{method:'POST',headers:b&&!(b instanceof FormData)?{'Content-Type':'application/json'}:{},body:b instanceof FormData?b:b&&JSON.stringify(b)});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.detail||r.status);return j};
+const WC={Plastic:'#3ddc84',Paper:'#b6f5cf',Glass:'#c8f169',Organic:'#1fa25a','E-waste':'#7fd6c2',General:'#6b7f73'},fc=f=>f>85?'#ff5d5d':f>60?'#ffb547':'#3ddc84';
+const map=L.map('map',{zoomSnap:.5}).setView([0.3,37.9],6);
+const dark=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap &copy; CARTO'}).addTo(map);
+const osm=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'});
+L.control.layers({'Dark roads':dark,'Streets':osm},{},{position:'topright'}).addTo(map);
+let S=null,sel=null,follow=false,first=true,tick=0;const B={},T={},RT={};
+const routeLayer=L.layerGroup().addTo(map);
+map.on('dragstart',()=>{follow=false;ui()});
+function icon(c,h){return L.divIcon({className:'',html:`<div class="${c}"></div>`,iconSize:[h,h],iconAnchor:[h/2,h/2]})}
+function setup(s){s.regions.forEach(r=>{L.marker([r.lat,r.lon],{icon:L.divIcon({className:'',html:`<div class="rl">${r.name}</div>`,iconSize:[0,0]}),interactive:false}).addTo(map);
+ L.marker(r.hub,{icon:icon('hb',12)}).bindTooltip(r.name+' sorting hub').addTo(map);L.marker(r.fac,{icon:icon('fc',14)}).bindTooltip(r.name+' recycler').addTo(map)})}
+async function drawRoute(t){try{const r=await jget('/trucks/'+t.id+'/route');if(RT[t.id])routeLayer.removeLayer(RT[t.id].l);
+ RT[t.id]={l:L.polyline(r.path,{color:'#c8f169',weight:3,opacity:.5}).addTo(routeLayer),stage:t.stage};styleRoutes()}catch(e){}}
+function styleRoutes(){Object.entries(RT).forEach(([id,r])=>{const mine=T[id]&&T[id].bin===sel;r.l.setStyle({opacity:mine?1:.35,weight:mine?5:3})})}
+function update(s){S=s;if(first){setup(s);first=false}
+ s.bins.forEach(b=>{let m=B[b.id];if(!m){m=B[b.id]=L.circleMarker([b.lat,b.lon],{radius:5,weight:1,fillOpacity:.85}).addTo(map).on('click',()=>select(b.id));m.bindTooltip(b.id)}
+  m.setStyle({color:b.id===sel?'#fff':fc(b.fill),fillColor:fc(b.fill),radius:b.id===sel?9:b.busy?4:5,weight:b.id===sel?3:1})});
+ const ids=new Set(s.trucks.map(t=>t.id));
+ s.trucks.forEach(t=>{let o=T[t.id];if(!o){o=T[t.id]={m:L.marker([t.lat,t.lon],{icon:icon('tk',18),zIndexOffset:900}).addTo(map).on('click',()=>select(t.bin)),stage:-1};o.m.bindTooltip(t.id)}
+  o.from=o.m.getLatLng();o.to=L.latLng(t.lat,t.lon);o.t0=performance.now();o.bin=t.bin;o.info=t;
+  if(o.stage!==t.stage){o.stage=t.stage;drawRoute(t)}});
+ Object.keys(T).forEach(id=>{if(!ids.has(id)){map.removeLayer(T[id].m);delete T[id];if(RT[id]){routeLayer.removeLayer(RT[id].l);delete RT[id]}}});
+ styleRoutes();panels()}
+function anim(){const n=performance.now();Object.values(T).forEach(o=>{if(!o.to)return;const u=Math.min(1,(n-o.t0)/1000);o.m.setLatLng([o.from.lat+(o.to.lat-o.from.lat)*u,o.from.lng+(o.to.lng-o.from.lng)*u]);
+ const e=o.m.getElement();if(e)e.firstChild.className='tk'+(o.bin===sel?' s':'')});
+ if(follow&&sel){const o=Object.values(T).find(o=>o.bin===sel);if(o)map.setView(o.m.getLatLng(),Math.max(map.getZoom(),10),{animate:false})}requestAnimationFrame(anim)}
+function select(id){sel=id;const b=S.bins.find(b=>b.id===id);if(b&&map.getZoom()<8)map.flyTo([b.lat,b.lon],9);ui();styleRoutes()}
+function ui(){panels()}
+function panels(){if(!S)return;const k=S.kpi;$('k1').textContent=k.tonnes;$('k2').textContent=k.diversion+'%';$('k3').textContent=k.bins;$('k4').textContent=k.trucks;
+ const mx=Math.max(...S.regions.map(r=>r.tonnes));
+ $('rg').innerHTML=S.regions.map((r,i)=>`<div class="r rg" data-i="${i}" title="Zoom to ${r.name}"><span>${r.name}</span><div class="bar"><i style="width:${r.tonnes/mx*100}%"></i></div><span class="${r.risk=='HIGH'?'bad':r.risk=='MEDIUM'?'wn':''}">${r.gap_pct}%</span></div>`).join('')+'<div class="mono">Click a region to zoom. Right column: unrecorded tonnage vs expected.</div>';
+ const T0=Object.values(S.totals).reduce((a,b)=>a+b,0);$('mx').innerHTML=Object.entries(S.totals).map(([n,v])=>`<i style="width:${v/T0*100}%;background:${WC[n]}"></i>`).join('');
+ $('ml').innerHTML=Object.entries(S.totals).map(([n,v])=>`<div class="r"><span style="color:${WC[n]}">● ${n}</span><div style="flex:1"></div><span>${(v/T0*100).toFixed(0)}%</span></div>`).join('');
+ const b=S.bins.find(b=>b.id===sel);if(!b)return;const t=S.trucks.find(t=>t.bin===sel);
+ const st=t?(t.stage?`Driving to the ${t.dest} recycler`:'Heading to the sorting hub'):'Waiting for pickup';
+ $('tr').innerHTML=`<b style="font:600 1.05rem Unbounded">${b.id}</b><div class="mono">${b.region} / ${b.waste} / ${b.lat.toFixed(4)}, ${b.lon.toFixed(4)}${b.live?' / live sensor':''}</div>
+ <div class="r"><span>Fill</span><div class="bar"><i style="width:${b.fill}%;background:${fc(b.fill)}"></i></div><span>${b.fill.toFixed(0)}%</span></div>
+ <div style="margin-bottom:8px" class="${t?'live':''}">${st}</div>${t?`<div class="mono" style="margin-bottom:8px">${t.id} / route: ${esc(t.source)}</div>`:''}
+ <button id="dp" ${b.busy?'disabled':''}>Dispatch truck</button> <button id="lc" class="gh">${follow?'Following truck':'Locate truck'}</button><div class="tl" id="tl"></div>`;
+ $('dp').onclick=async()=>{try{await jpost('/dispatch/'+sel)}catch(e){alert(e.message)}};
+ $('lc').onclick=async()=>{if(!S.trucks.find(t=>t.bin===sel)){try{await jpost('/dispatch/'+sel);await new Promise(r=>setTimeout(r,1200))}catch(e){return alert(e.message)}}follow=true;panels()};
+ jget('/ledger?limit=200').then(l=>{const m=l.filter(e=>e.data.bin===sel).slice(0,5),el=$('tl');if(el)el.innerHTML=m.length?m.map(e=>`<div>${e.kind}<br><span class="mono">${new Date(e.ts*1000).toLocaleTimeString()} ${e.hash.slice(0,12)}</span></div>`).join(''):'<div>No custody events yet</div>'}).catch(()=>{})}
+$('rg').onclick=e=>{const d=e.target.closest('.rg');if(d){follow=false;const r=S.regions[+d.dataset.i];map.flyTo([r.lat,r.lon],10)}};
+$('s').onkeydown=e=>{if(e.key==='Enter'&&S){const v=e.target.value.trim().toUpperCase(),b=S.bins.find(b=>b.id===v);if(b){select(v);map.flyTo([b.lat,b.lon],12)}else e.target.value='Not found'}};
+async function alerts(){try{const l=await jget('/ledger?limit=6');$('al').innerHTML=S.regions.filter(r=>r.risk==='HIGH').map(r=>`<div class="al bad">${r.name}: ${r.gap_pct}% of expected tonnage unrecorded. Inspection queued.</div>`).join('')+l.map(e=>`<div class="al"><span class="mono">${new Date(e.ts*1000).toLocaleTimeString()} ${e.hash.slice(0,10)}</span><br>${e.kind} ${esc(e.data.bin||'')}</div>`).join('')}catch(e){}}
+$('vl').onclick=async()=>{const v=await jget('/ledger/verify');$('vr').className='mono '+(v.valid?'':'bad');$('vr').textContent=v.valid?`Valid: ${v.length} events linked${v.hedera?', anchored to Hedera':''}`:`Broken at event ${v.broken_at}`};
+// RAG chat
+const log=$('log');function say(t,c){const p=document.createElement('p');if(c)p.className=c;p.textContent=t;log.appendChild(p);log.scrollTop=log.scrollHeight;return p}
+async function ask(q){if(!q)return;say(q,'u');const p=say('Thinking...');try{const r=await jpost('/ask',{question:q});p.textContent=r.answer;
+ const s=document.createElement('div');s.className='mono';s.textContent=`${r.engine} | sources: `+r.sources.slice(0,4).map(x=>x.title).join(', ');p.appendChild(s)}catch(e){p.textContent='Could not reach the assistant: '+e.message}log.scrollTop=log.scrollHeight}
+$('q').onkeydown=e=>{if(e.key==='Enter'){const v=e.target.value.trim();e.target.value='';ask(v)}};
+['Which region has the highest dumping risk?','Where are the trucks right now?','Which bins are almost full?','Where do batteries go?'].forEach(q=>{const b=document.createElement('button');b.className='gh';b.textContent=q;b.onclick=()=>ask(q);$('ch').appendChild(b)});
+// Serve the frontend from the same origin by default. To point a static frontend at a separate backend, set:
+// window.ECOTRACE_BACKEND_URL = 'http://localhost:8000'; before the page loads.
+// Vision
+$('vb').onclick=async()=>{const f=$('vf').files[0],o=$('vo');if(!f){o.textContent='Choose or take a photo first.';return}
+ const fd=new FormData();fd.append('file',f);if(sel)fd.append('bin_id',sel);o.textContent='Classifying...';
+ try{const j=await jpost('/vision/classify',fd);o.innerHTML=`<b style="color:var(--tx)">${esc(j.category)}</b> goes in the ${esc(j.bin_colour)} bin (${(j.confidence*100).toFixed(0)}% via ${esc(j.engine)})<br>`+j.detections.map(d=>`${esc(d.label)} ${(d.confidence*100).toFixed(0)}%`).join(', ')+(j.openai&&j.openai.advice?`<br>${esc(j.openai.advice)}`:'')+`<br>ledger ${esc(j.ledger_hash.slice(0,12))}`}
+ catch(e){o.textContent='Vision unavailable: '+e.message}};
+async function poll(){try{update(await jget('/state'));$('st').className='live';$('st').textContent='Live';if(++tick%3===1)alerts()}catch(e){$('st').className='live off';$('st').textContent='Backend offline'}}
+jget('/config').then(c=>say(c.openai?'AI is enabled. Ask anything about the live system.':'No AI key set: answers come from retrieval only. Add OPENAI_API_KEY to backend/.env.')).catch(()=>{});
+poll();setInterval(poll,1000);anim();
+</script></body></html>

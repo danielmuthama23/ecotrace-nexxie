@@ -79,4 +79,3 @@ Tools: system_summary, trace_bin, ask_system, dispatch_truck, verify_ledger, cla
 ## Known limits
 Fleet state is in memory (the ledger persists in SQLite, bins and trucks reset on restart). No user accounts yet, only the optional API key.
 RAG uses TF-IDF; swap in OpenAI embeddings plus pgvector for large deployments. Run behind HTTPS and restrict CORS before exposing publicly.
-# ecotrace-nexxie

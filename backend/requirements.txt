@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+httpx
+python-dotenv
+python-multipart
+scikit-learn
+openai
+pillow
+mcp
+hiero-sdk-python
